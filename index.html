@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Silicon Shadows - Mobile Edition</title>
+    <title>Silicon Shadows - Mortal Kombat Edition</title>
     <style>
         body {
             background-color: #0b0b16;
@@ -18,11 +18,11 @@
             padding: 10px;
             box-sizing: border-box;
             overflow: hidden;
-            touch-action: none; /* Prevents unwanted iOS zooming/scrolling */
+            touch-action: none;
         }
         h1 {
             margin: 5px 0;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             text-shadow: 0 0 8px #00ffcc;
             text-align: center;
         }
@@ -53,7 +53,7 @@
         canvas {
             border: 3px solid #00ffcc;
             box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
-            background: linear-gradient(to bottom, #111122, #05050a);
+            background: linear-gradient(to bottom, #14142b, #05050a);
             width: 100%;
             max-width: 360px;
             height: 260px;
@@ -65,7 +65,6 @@
             margin: 5px 0;
             color: #00ffcc;
         }
-        /* On-Screen Touch Controls */
         #controls {
             display: flex;
             flex-direction: column;
@@ -92,7 +91,6 @@
             text-align: center;
             user-select: none;
             -webkit-user-select: none;
-            box-shadow: 0 0 8px rgba(0, 255, 204, 0.2);
         }
         .ctrl-btn:active {
             background: rgba(0, 255, 204, 0.4);
@@ -111,12 +109,12 @@
 </head>
 <body>
 
-    <h1>SILICON SHADOWS</h1>
+    <h1>SILICON SHADOWS: KOMBAT</h1>
     <div id="ui">
         <div>PLAYER: <span id="pText">100</span>%
             <div class="health-bar-container"><div id="playerHealth" class="health-bar"></div></div>
         </div>
-        <div>AI: <span id="aiText">100</span>%
+        <div>RIVAL AI: <span id="aiText">100</span>%
             <div class="health-bar-container"><div id="aiHealth" class="health-bar"></div></div>
         </div>
     </div>
@@ -124,7 +122,6 @@
     <div id="status">FIGHT!</div>
     <canvas id="gameCanvas" width="360" height="260"></canvas>
 
-    <!-- Touch Control Pad -->
     <div id="controls">
         <div class="control-row">
             <div class="ctrl-btn" id="leftBtn">◀ LEFT</div>
@@ -132,8 +129,8 @@
             <div class="ctrl-btn" id="rightBtn">RIGHT ▶</div>
         </div>
         <div class="control-row">
-            <div class="ctrl-btn action-btn" id="punchBtn">PUNCH (J)</div>
-            <div class="ctrl-btn action-btn" id="kickBtn">KICK (K)</div>
+            <div class="ctrl-btn action-btn" id="punchBtn">PUNCH</div>
+            <div class="ctrl-btn action-btn" id="kickBtn">KICK</div>
         </div>
     </div>
 
@@ -143,28 +140,24 @@ const ctx = canvas.getContext("2d");
 
 let gameOver = false;
 
-// Fighter Objects (Scaled for 360x260 canvas)
 const player = {
-    x: 60, y: 170, width: 30, height: 70, color: "#00ffcc",
-    vx: 0, vy: 0, speed: 4.5, health: 100, isAttacking: false, attackCooldown: 0
+    x: 60, y: 155, width: 34, height: 85, 
+    primary: "#00ffcc", secondary: "#008866",
+    vx: 0, vy: 0, speed: 4.5, health: 100, isAttacking: false, attackType: null, attackCooldown: 0, facing: 1
 };
 
 const ai = {
-    x: 270, y: 170, width: 30, height: 70, color: "#ff0055",
-    vx: 0, vy: 0, speed: 2.8, health: 100, isAttacking: false, attackTimer: 0
+    x: 270, y: 155, width: 34, height: 85, 
+    primary: "#ff0055", secondary: "#880033",
+    vx: 0, vy: 0, speed: 2.8, health: 100, isAttacking: false, attackType: null, attackTimer: 0, facing: -1
 };
 
 const keys = {};
 
-// Setup Touch & Mouse Bindings for Buttons
 function bindControl(id, keyName) {
     const btn = document.getElementById(id);
-    
-    // Touch Events
     btn.addEventListener("touchstart", e => { e.preventDefault(); keys[keyName] = true; }, {passive: false});
     btn.addEventListener("touchend", e => { e.preventDefault(); keys[keyName] = false; }, {passive: false});
-    
-    // Mouse fallback for desktop testing
     btn.addEventListener("mousedown", () => keys[keyName] = true);
     btn.addEventListener("mouseup", () => keys[keyName] = false);
 }
@@ -175,7 +168,6 @@ bindControl("jumpBtn", "w");
 bindControl("punchBtn", "j");
 bindControl("kickBtn", "k");
 
-// Keyboard fallback support
 window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
@@ -183,25 +175,30 @@ function updateAI() {
     if (gameOver) return;
 
     const distance = player.x - ai.x;
+    ai.facing = distance > 0 ? 1 : -1;
 
     if (Math.abs(distance) > 50) {
         ai.vx = Math.sign(distance) * ai.speed;
     } else {
         ai.vx = 0;
         ai.attackTimer++;
-        if (ai.attackTimer > 40 && Math.random() < 0.45) {
-            triggerAttack(ai, player);
+        if (ai.attackTimer > 35 && Math.random() < 0.5) {
+            triggerAttack(ai, player, Math.random() > 0.5 ? 'punch' : 'kick');
             ai.attackTimer = 0;
         }
     }
 }
 
-function triggerAttack(attacker, defender) {
+function triggerAttack(attacker, defender, type) {
     attacker.isAttacking = true;
-    setTimeout(() => attacker.isAttacking = false, 120);
+    attacker.attackType = type;
+    setTimeout(() => {
+        attacker.isAttacking = false;
+        attacker.attackType = null;
+    }, 150);
 
-    if (Math.abs(attacker.x - defender.x) < 55) {
-        defender.health -= 10;
+    if (Math.abs(attacker.x - defender.x) < 60) {
+        defender.health -= (type === 'punch' ? 8 : 12);
         if (defender.health < 0) defender.health = 0;
     }
 }
@@ -209,81 +206,129 @@ function triggerAttack(attacker, defender) {
 function update() {
     if (gameOver) return;
 
-    // Player Movement
     player.vx = 0;
-    if (keys['a']) player.vx = -player.speed;
-    if (keys['d']) player.vx = player.speed;
-    if (keys['w'] && player.y === 170) player.vy = -10.5; // Jump
+    if (keys['a']) { player.vx = -player.speed; player.facing = -1; }
+    if (keys['d']) { player.vx = player.speed; player.facing = 1; }
+    if (keys['w'] && player.y === 155) player.vy = -10.5;
 
-    // Player Attacks
     if (keys['j'] && player.attackCooldown === 0) {
-        triggerAttack(player, ai);
+        triggerAttack(player, ai, 'punch');
         player.attackCooldown = 18;
     }
     if (keys['k'] && player.attackCooldown === 0) {
-        triggerAttack(player, ai);
-        player.attackCooldown = 22;
+        triggerAttack(player, ai, 'kick');
+        player.attackCooldown = 24;
     }
     if (player.attackCooldown > 0) player.attackCooldown--;
 
-    // Physics (Gravity)
     player.vy += 0.55;
     player.y += player.vy;
-    if (player.y > 170) { player.y = 170; player.vy = 0; }
+    if (player.y > 155) { player.y = 155; player.vy = 0; }
 
     ai.vy += 0.55;
     ai.y += ai.vy;
-    if (ai.y > 170) { ai.y = 170; ai.vy = 0; }
+    if (ai.y > 155) { ai.y = 155; ai.vy = 0; }
 
     player.x += player.vx;
     updateAI();
     ai.x += ai.vx;
 
-    // Boundaries
-    player.x = Math.max(10, Math.min(canvas.width - 40, player.x));
-    ai.x = Math.max(10, Math.min(canvas.width - 40, ai.x));
+    player.x = Math.max(15, Math.min(canvas.width - 45, player.x));
+    ai.x = Math.max(15, Math.min(canvas.width - 45, ai.x));
 
-    // Update UI
     document.getElementById("playerHealth").style.width = player.health + "%";
     document.getElementById("pText").innerText = player.health;
     document.getElementById("aiHealth").style.width = ai.health + "%";
     document.getElementById("aiText").innerText = ai.health;
 
-    // Win/Loss Condition
     if (player.health <= 0 || ai.health <= 0) {
         gameOver = true;
         const statusEl = document.getElementById("status");
-        statusEl.innerText = player.health <= 0 ? "SYSTEM FAILURE (AI WINS)" : "PURGE COMPLETE (YOU WIN)";
+        statusEl.innerText = player.health <= 0 ? "FATALITY: AI WINS" : "FLAWLESS VICTORY: YOU WIN";
         statusEl.style.color = player.health <= 0 ? "#ff0055" : "#00ffcc";
     }
+}
+
+// Draw Detailed Retro Human Fighter (MK Style Sprite Simulation)
+function drawFighter(f) {
+    ctx.save();
+    ctx.translate(f.x + f.width / 2, f.y);
+
+    // Body shading / shadow
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.fillRect(-f.width/2, f.height, f.width, 6);
+
+    // Legs
+    ctx.fillStyle = f.secondary;
+    ctx.fillRect(-12, 50, 9, 35);
+    ctx.fillRect(3, 50, 9, 35);
+
+    // Torso / Vest / Gi
+    ctx.fillStyle = f.primary;
+    ctx.fillRect(-14, 20, 28, 32);
+    // Chest armor plate
+    ctx.fillStyle = f.secondary;
+    ctx.fillRect(-10, 23, 20, 16);
+
+    // Belt
+    ctx.fillStyle = "#111";
+    ctx.fillRect(-14, 48, 28, 5);
+
+    // Arms & Attacks
+    ctx.fillStyle = f.primary;
+    if (f.isAttacking) {
+        if (f.attackType === 'punch') {
+            // Punch lunge
+            ctx.fillRect(f.facing === 1 ? 6 : -30, 24, 28, 8);
+        } else {
+            // Kick extension
+            ctx.fillStyle = f.secondary;
+            ctx.fillRect(f.facing === 1 ? 10 : -25, 62, 22, 9);
+        }
+    } else {
+        // Normal arms resting
+        ctx.fillRect(-18, 24, 7, 24);
+        ctx.fillRect(11, 24, 7, 24);
+    }
+
+    // Head & Hood / Ninja Mask
+    ctx.fillStyle = f.secondary;
+    ctx.beginPath();
+    ctx.arc(0, 10, 11, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mask / Face visor
+    ctx.fillStyle = "#111";
+    ctx.fillRect(-7, 8, 14, 7);
+    ctx.fillStyle = f.primary;
+    ctx.fillRect(-4, 10, 8, 3); // Glowing eye slit
+
+    ctx.restore();
 }
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Floor line
+    // Cyber Arena Background Grid Lines
     ctx.strokeStyle = "#1a1a3a";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < canvas.width; i += 30) {
+        ctx.beginPath();
+        ctx.moveTo(i, 240);
+        ctx.lineTo(i + (i - canvas.width/2)*0.5, 260);
+        ctx.stroke();
+    }
+
+    // Floor line
+    ctx.strokeStyle = "#00ffcc";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, 240);
     ctx.lineTo(canvas.width, 240);
     ctx.stroke();
 
-    // Draw Player
-    ctx.fillStyle = player.color;
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-    if (player.isAttacking) {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(player.x + 30, player.y + 15, 20, 12);
-    }
-
-    // Draw AI
-    ctx.fillStyle = ai.color;
-    ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
-    if (ai.isAttacking) {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(ai.x - 20, ai.y + 15, 20, 12);
-    }
+    drawFighter(player);
+    drawFighter(ai);
 }
 
 function gameLoop() {
