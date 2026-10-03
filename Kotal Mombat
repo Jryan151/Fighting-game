@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silicon Shadows - Arena</title>
+    <style>
+        body {
+            background-color: #0b0b16;
+            color: #00ffcc;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        h1 {
+            margin: 5px;
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px #00ffcc;
+        }
+        #ui {
+            display: flex;
+            justify-content: space-between;
+            width: 800px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .health-bar-container {
+            width: 350px;
+            height: 20px;
+            border: 2px solid #00ffcc;
+            background: #222;
+            position: relative;
+        }
+        .health-bar {
+            height: 100%;
+            background: #ff0055;
+            width: 100%;
+            transition: width 0.1s ease;
+        }
+        #playerHealth { background: #00ffcc; }
+        canvas {
+            border: 3px solid #00ffcc;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+            background: linear-gradient(to bottom, #111122, #05050a);
+        }
+        #controls {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #8888aa;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>SILICON SHADOWS: PROTOCOL DUEL</h1>
+    <div id="ui">
+        <div>PLAYER: <span id="pText">100</span>%
+            <div class="health-bar-container"><div id="playerHealth" class="health-bar"></div></div>
+        </div>
+        <div id="status">FIGHT!</div>
+        <div>AI RIVAL: <span id="aiText">100</span>%
+            <div class="health-bar-container"><div id="aiHealth" class="health-bar"></div></div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div id="controls">Controls: A/D to Move | W to Jump | J to Punch | K to Kick</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// Game State
+let gameOver = false;
+
+// Fighter Objects
+const player = {
+    x: 150, y: 280, width: 40, height: 90, color: "#00ffcc",
+    vx: 0, vy: 0, speed: 5, health: 100, isAttacking: false, attackCooldown: 0
+};
+
+const ai = {
+    x: 600, y: 280, width: 40, height: 90, color: "#ff0055",
+    vx: 0, vy: 0, speed: 3, health: 100, isAttacking: false, attackTimer: 0
+};
+
+const keys = {};
+
+// Input Listeners
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+function updateAI() {
+    if (gameOver) return;
+
+    // Average Difficulty Logic: Tracks player position and reacts
+    const distance = player.x - ai.x;
+
+    if (Math.abs(distance) > 65) {
+        // Move towards player
+        ai.vx = Math.sign(distance) * ai.speed;
+    } else {
+        ai.vx = 0;
+        // Random chance to strike when close
+        ai.attackTimer++;
+        if (ai.attackTimer > 45 && Math.random() < 0.4) {
+            triggerAttack(ai, player);
+            ai.attackTimer = 0;
+        }
+    }
+}
+
+function triggerAttack(attacker, defender) {
+    attacker.isAttacking = true;
+    setTimeout(() => attacker.isAttacking = false, 150);
+
+    // Check hit collision range
+    if (Math.abs(attacker.x - defender.x) < 70) {
+        defender.health -= 10;
+        if (defender.health < 0) defender.health = 0;
+    }
+}
+
+function update() {
+    if (gameOver) return;
+
+    // Player Movement
+    player.vx = 0;
+    if (keys['a']) player.vx = -player.speed;
+    if (keys['d']) player.vx = player.speed;
+    if (keys['w'] && player.y === 280) player.vy = -12; // Jump
+
+    // Player Attacks
+    if (keys['j'] && player.attackCooldown === 0) {
+        triggerAttack(player, ai);
+        player.attackCooldown = 20; // Cooldown frames
+    }
+    if (keys['k'] && player.attackCooldown === 0) {
+        triggerAttack(player, ai);
+        player.attackCooldown = 25;
+    }
+    if (player.attackCooldown > 0) player.attackCooldown--;
+
+    // Physics (Gravity)
+    player.vy += 0.6;
+    player.y += player.vy;
+    if (player.y > 280) { player.y = 280; player.vy = 0; }
+
+    ai.vy += 0.6;
+    ai.y += ai.vy;
+    if (ai.y > 280) { ai.y = 280; ai.vy = 0; }
+
+    // Update positions
+    player.x += player.vx;
+    updateAI();
+    ai.x += ai.vx;
+
+    // Screen boundaries
+    player.x = Math.max(20, Math.min(canvas.width - 60, player.x));
+    ai.x = Math.max(20, Math.min(canvas.width - 60, ai.x));
+
+    // Update UI Elements
+    document.getElementById("playerHealth").style.width = player.health + "%";
+    document.getElementById("pText").innerText = player.health;
+    document.getElementById("aiHealth").style.width = ai.health + "%";
+    document.getElementById("aiText").innerText = ai.health;
+
+    // Check Win/Loss
+    if (player.health <= 0 || ai.health <= 0) {
+        gameOver = true;
+        document.getElementById("status").innerText = player.health <= 0 ? "SYSTEM FAILURE (AI WINS)" : "PURGE COMPLETE (YOU WIN)";
+        document.getElementById("status").style.color = player.health <= 0 ? "#ff0055" : "#00ffcc";
+    }
+}
+
+function draw() {
+    // Clear screen
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw Cyberpunk Floor Grid
+    ctx.strokeStyle = "#1a1a3a";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 370);
+    ctx.lineTo(canvas.width, 370);
+    ctx.stroke();
+
+    // Draw Player
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+    if (player.isAttacking) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(player.x + 40, player.y + 20, 30, 15); // Punch hitbox visual
+    }
+
+    // Draw AI
+    ctx.fillStyle = ai.color;
+    ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
+    if (ai.isAttacking) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(ai.x - 30, ai.y + 20, 30, 15);
+    }
+}
+
+function gameLoop() {
+    update();
+    draw();
+    if (!gameOver) {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
