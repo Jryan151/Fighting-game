@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Silicon Shadows - Arena</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Silicon Shadows - Mobile Edition</title>
     <style>
         body {
             background-color: #0b0b16;
@@ -12,30 +12,36 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
+            justify-content: flex-start;
+            min-height: 100vh;
             margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
             overflow: hidden;
+            touch-action: none; /* Prevents unwanted iOS zooming/scrolling */
         }
         h1 {
-            margin: 5px;
-            font-size: 1.5rem;
-            text-shadow: 0 0 10px #00ffcc;
+            margin: 5px 0;
+            font-size: 1.2rem;
+            text-shadow: 0 0 8px #00ffcc;
+            text-align: center;
         }
         #ui {
             display: flex;
             justify-content: space-between;
-            width: 800px;
-            margin-bottom: 10px;
+            width: 100%;
+            max-width: 360px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
             font-weight: bold;
-            font-size: 1.1rem;
         }
         .health-bar-container {
-            width: 350px;
-            height: 20px;
+            width: 110px;
+            height: 14px;
             border: 2px solid #00ffcc;
             background: #222;
             position: relative;
+            margin-top: 2px;
         }
         .health-bar {
             height: 100%;
@@ -46,70 +52,144 @@
         #playerHealth { background: #00ffcc; }
         canvas {
             border: 3px solid #00ffcc;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
             background: linear-gradient(to bottom, #111122, #05050a);
+            width: 100%;
+            max-width: 360px;
+            height: 260px;
         }
-        #controls {
-            margin-top: 10px;
+        #status {
+            text-align: center;
             font-size: 0.9rem;
-            color: #8888aa;
+            height: 20px;
+            margin: 5px 0;
+            color: #00ffcc;
+        }
+        /* On-Screen Touch Controls */
+        #controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 360px;
+            margin-top: 15px;
+        }
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .ctrl-btn {
+            flex: 1;
+            background: rgba(0, 255, 204, 0.1);
+            border: 2px solid #00ffcc;
+            color: #00ffcc;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 18px 0;
+            border-radius: 8px;
+            text-align: center;
+            user-select: none;
+            -webkit-user-select: none;
+            box-shadow: 0 0 8px rgba(0, 255, 204, 0.2);
+        }
+        .ctrl-btn:active {
+            background: rgba(0, 255, 204, 0.4);
+            box-shadow: 0 0 12px #00ffcc;
+        }
+        .action-btn {
+            border-color: #ff0055;
+            color: #ff0055;
+            background: rgba(255, 0, 85, 0.1);
+        }
+        .action-btn:active {
+            background: rgba(255, 0, 85, 0.4);
+            box-shadow: 0 0 12px #ff0055;
         }
     </style>
 </head>
 <body>
 
-    <h1>SILICON SHADOWS: PROTOCOL DUEL</h1>
+    <h1>SILICON SHADOWS</h1>
     <div id="ui">
         <div>PLAYER: <span id="pText">100</span>%
             <div class="health-bar-container"><div id="playerHealth" class="health-bar"></div></div>
         </div>
-        <div id="status">FIGHT!</div>
-        <div>AI RIVAL: <span id="aiText">100</span>%
+        <div>AI: <span id="aiText">100</span>%
             <div class="health-bar-container"><div id="aiHealth" class="health-bar"></div></div>
         </div>
     </div>
 
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
-    <div id="controls">Controls: A/D to Move | W to Jump | J to Punch | K to Kick</div>
+    <div id="status">FIGHT!</div>
+    <canvas id="gameCanvas" width="360" height="260"></canvas>
+
+    <!-- Touch Control Pad -->
+    <div id="controls">
+        <div class="control-row">
+            <div class="ctrl-btn" id="leftBtn">◀ LEFT</div>
+            <div class="ctrl-btn" id="jumpBtn">▲ JUMP</div>
+            <div class="ctrl-btn" id="rightBtn">RIGHT ▶</div>
+        </div>
+        <div class="control-row">
+            <div class="ctrl-btn action-btn" id="punchBtn">PUNCH (J)</div>
+            <div class="ctrl-btn action-btn" id="kickBtn">KICK (K)</div>
+        </div>
+    </div>
 
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Game State
 let gameOver = false;
 
-// Fighter Objects
+// Fighter Objects (Scaled for 360x260 canvas)
 const player = {
-    x: 150, y: 280, width: 40, height: 90, color: "#00ffcc",
-    vx: 0, vy: 0, speed: 5, health: 100, isAttacking: false, attackCooldown: 0
+    x: 60, y: 170, width: 30, height: 70, color: "#00ffcc",
+    vx: 0, vy: 0, speed: 4.5, health: 100, isAttacking: false, attackCooldown: 0
 };
 
 const ai = {
-    x: 600, y: 280, width: 40, height: 90, color: "#ff0055",
-    vx: 0, vy: 0, speed: 3, health: 100, isAttacking: false, attackTimer: 0
+    x: 270, y: 170, width: 30, height: 70, color: "#ff0055",
+    vx: 0, vy: 0, speed: 2.8, health: 100, isAttacking: false, attackTimer: 0
 };
 
 const keys = {};
 
-// Input Listeners
+// Setup Touch & Mouse Bindings for Buttons
+function bindControl(id, keyName) {
+    const btn = document.getElementById(id);
+    
+    // Touch Events
+    btn.addEventListener("touchstart", e => { e.preventDefault(); keys[keyName] = true; }, {passive: false});
+    btn.addEventListener("touchend", e => { e.preventDefault(); keys[keyName] = false; }, {passive: false});
+    
+    // Mouse fallback for desktop testing
+    btn.addEventListener("mousedown", () => keys[keyName] = true);
+    btn.addEventListener("mouseup", () => keys[keyName] = false);
+}
+
+bindControl("leftBtn", "a");
+bindControl("rightBtn", "d");
+bindControl("jumpBtn", "w");
+bindControl("punchBtn", "j");
+bindControl("kickBtn", "k");
+
+// Keyboard fallback support
 window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 function updateAI() {
     if (gameOver) return;
 
-    // Average Difficulty Logic: Tracks player position and reacts
     const distance = player.x - ai.x;
 
-    if (Math.abs(distance) > 65) {
-        // Move towards player
+    if (Math.abs(distance) > 50) {
         ai.vx = Math.sign(distance) * ai.speed;
     } else {
         ai.vx = 0;
-        // Random chance to strike when close
         ai.attackTimer++;
-        if (ai.attackTimer > 45 && Math.random() < 0.4) {
+        if (ai.attackTimer > 40 && Math.random() < 0.45) {
             triggerAttack(ai, player);
             ai.attackTimer = 0;
         }
@@ -118,10 +198,9 @@ function updateAI() {
 
 function triggerAttack(attacker, defender) {
     attacker.isAttacking = true;
-    setTimeout(() => attacker.isAttacking = false, 150);
+    setTimeout(() => attacker.isAttacking = false, 120);
 
-    // Check hit collision range
-    if (Math.abs(attacker.x - defender.x) < 70) {
+    if (Math.abs(attacker.x - defender.x) < 55) {
         defender.health -= 10;
         if (defender.health < 0) defender.health = 0;
     }
@@ -134,61 +213,60 @@ function update() {
     player.vx = 0;
     if (keys['a']) player.vx = -player.speed;
     if (keys['d']) player.vx = player.speed;
-    if (keys['w'] && player.y === 280) player.vy = -12; // Jump
+    if (keys['w'] && player.y === 170) player.vy = -10.5; // Jump
 
     // Player Attacks
     if (keys['j'] && player.attackCooldown === 0) {
         triggerAttack(player, ai);
-        player.attackCooldown = 20; // Cooldown frames
+        player.attackCooldown = 18;
     }
     if (keys['k'] && player.attackCooldown === 0) {
         triggerAttack(player, ai);
-        player.attackCooldown = 25;
+        player.attackCooldown = 22;
     }
     if (player.attackCooldown > 0) player.attackCooldown--;
 
     // Physics (Gravity)
-    player.vy += 0.6;
+    player.vy += 0.55;
     player.y += player.vy;
-    if (player.y > 280) { player.y = 280; player.vy = 0; }
+    if (player.y > 170) { player.y = 170; player.vy = 0; }
 
-    ai.vy += 0.6;
+    ai.vy += 0.55;
     ai.y += ai.vy;
-    if (ai.y > 280) { ai.y = 280; ai.vy = 0; }
+    if (ai.y > 170) { ai.y = 170; ai.vy = 0; }
 
-    // Update positions
     player.x += player.vx;
     updateAI();
     ai.x += ai.vx;
 
-    // Screen boundaries
-    player.x = Math.max(20, Math.min(canvas.width - 60, player.x));
-    ai.x = Math.max(20, Math.min(canvas.width - 60, ai.x));
+    // Boundaries
+    player.x = Math.max(10, Math.min(canvas.width - 40, player.x));
+    ai.x = Math.max(10, Math.min(canvas.width - 40, ai.x));
 
-    // Update UI Elements
+    // Update UI
     document.getElementById("playerHealth").style.width = player.health + "%";
     document.getElementById("pText").innerText = player.health;
     document.getElementById("aiHealth").style.width = ai.health + "%";
     document.getElementById("aiText").innerText = ai.health;
 
-    // Check Win/Loss
+    // Win/Loss Condition
     if (player.health <= 0 || ai.health <= 0) {
         gameOver = true;
-        document.getElementById("status").innerText = player.health <= 0 ? "SYSTEM FAILURE (AI WINS)" : "PURGE COMPLETE (YOU WIN)";
-        document.getElementById("status").style.color = player.health <= 0 ? "#ff0055" : "#00ffcc";
+        const statusEl = document.getElementById("status");
+        statusEl.innerText = player.health <= 0 ? "SYSTEM FAILURE (AI WINS)" : "PURGE COMPLETE (YOU WIN)";
+        statusEl.style.color = player.health <= 0 ? "#ff0055" : "#00ffcc";
     }
 }
 
 function draw() {
-    // Clear screen
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw Cyberpunk Floor Grid
+    // Floor line
     ctx.strokeStyle = "#1a1a3a";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(0, 370);
-    ctx.lineTo(canvas.width, 370);
+    ctx.moveTo(0, 240);
+    ctx.lineTo(canvas.width, 240);
     ctx.stroke();
 
     // Draw Player
@@ -196,7 +274,7 @@ function draw() {
     ctx.fillRect(player.x, player.y, player.width, player.height);
     if (player.isAttacking) {
         ctx.fillStyle = "#ffffff";
-        ctx.fillRect(player.x + 40, player.y + 20, 30, 15); // Punch hitbox visual
+        ctx.fillRect(player.x + 30, player.y + 15, 20, 12);
     }
 
     // Draw AI
@@ -204,7 +282,7 @@ function draw() {
     ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
     if (ai.isAttacking) {
         ctx.fillStyle = "#ffffff";
-        ctx.fillRect(ai.x - 30, ai.y + 20, 30, 15);
+        ctx.fillRect(ai.x - 20, ai.y + 15, 20, 12);
     }
 }
 
