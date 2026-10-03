@@ -3,7 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Silicon Shadows - Mortal Kombat Edition</title>
+    <title>Silicon Shadows - 3D WebGL Edition</title>
+    <style>
+        body {
+            background-color: #05050a;
+            color: #00ffcc;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            touch-action: none;
+        }
+        h1 {
+            margin: 5px 0;
+            font-size: 1.1rem;
+            text-shadow: 0 0 8px #00ffcc;
+            text-align: center;
+        }
+        #canvas-container {
+            width: 100%;
+            max-width: 380px;
+            height: 320px;
+            border: 3px solid #00ffcc;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+            background: #000;
+        }
+        #info {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #8888aa;
+            text-align: center;
+        }
+    </style>
+    <!-- Load Three.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <h1>SILICON SHADOWS: 3D PROTOTYPE</h1>
+    <div id="canvas-container"></div>
+    <div id="info">True 3D WebGL Renderer (PS2 Style Lighting & Polygons)</div>
+
+<script>
+// 1. Scene, Camera, & Renderer Setup
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0b16);
+
+const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+camera.position.set(0, 3, 7);
+camera.lookAt(0, 1, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+Here is a complete, single-file HTML template using **Three.js** (loaded directly via a CDN) that boots up a real **3D WebGL scene** right in your iPad browser. 
+
+This sets up the groundwork for a 3D polygon fighter reminiscent of the classic PS2 aesthetic you shared, complete with 3D perspective, lighting, a grid floor, and low-poly character meshes.
+
+Replace the code in your `index.html` file with this:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Silicon Shadows - 3D Engine</title>
     <style>
         body {
             background-color: #0b0b16;
@@ -50,13 +118,13 @@
             transition: width 0.1s ease;
         }
         #playerHealth { background: #00ffcc; }
-        canvas {
+        #canvas-container {
             border: 3px solid #00ffcc;
             box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
-            background: linear-gradient(to bottom, #14142b, #05050a);
             width: 100%;
             max-width: 360px;
             height: 260px;
+            background: #05050a;
         }
         #status {
             text-align: center;
@@ -86,7 +154,7 @@
             font-family: 'Courier New', Courier, monospace;
             font-size: 1.1rem;
             font-weight: bold;
-            padding: 18px 0;
+            padding: 16px 0;
             border-radius: 8px;
             text-align: center;
             user-select: none;
@@ -106,240 +174,130 @@
             box-shadow: 0 0 12px #ff0055;
         }
     </style>
+    <!-- Load Three.js 3D Library from CDN -->
+    <script src="[https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js](https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js)"></script>
 </head>
 <body>
 
-    <h1>SILICON SHADOWS: KOMBAT</h1>
+    <h1>SILICON SHADOWS: 3D</h1>
     <div id="ui">
         <div>PLAYER: <span id="pText">100</span>%
             <div class="health-bar-container"><div id="playerHealth" class="health-bar"></div></div>
         </div>
-        <div>RIVAL AI: <span id="aiText">100</span>%
+        <div>AI RIVAL: <span id="aiText">100</span>%
             <div class="health-bar-container"><div id="aiHealth" class="health-bar"></div></div>
         </div>
     </div>
 
-    <div id="status">FIGHT!</div>
-    <canvas id="gameCanvas" width="360" height="260"></canvas>
+    <div id="status">3D ENGINE INITIALIZED</div>
+    <div id="canvas-container"></div>
 
     <div id="controls">
         <div class="control-row">
-            <div class="ctrl-btn" id="leftBtn">◀ LEFT</div>
-            <div class="ctrl-btn" id="jumpBtn">▲ JUMP</div>
-            <div class="ctrl-btn" id="rightBtn">RIGHT ▶</div>
+            <div class="ctrl-btn" id="leftBtn">◀ MOVE LEFT</div>
+            <div class="ctrl-btn" id="rightBtn">MOVE RIGHT ▶</div>
         </div>
         <div class="control-row">
-            <div class="ctrl-btn action-btn" id="punchBtn">PUNCH</div>
-            <div class="ctrl-btn action-btn" id="kickBtn">KICK</div>
+            <div class="ctrl-btn action-btn" id="punchBtn">ATTACK</div>
         </div>
     </div>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+// --- Three.js 3D Setup ---
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e0e1f);
 
+const camera = new THREE.PerspectiveCamera(50, 360 / 260, 0.1, 1000);
+camera.position.set(0, 2, 6);
+camera.lookAt(0, 0.5, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(360, 260);
+container.appendChild(renderer.domElement);
+
+// Lighting (Giving it that classic 3D game shadow/lighting depth)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0x00ffcc, 1);
+directionalLight.position.set(5, 10, 7);
+scene.add(directionalLight);
+
+// Retro Arena Grid Floor
+const grid = new THREE.GridHelper(20, 20, 0x00ffcc, 0x1a1a3a);
+grid.position.y = -1;
+scene.add(grid);
+
+// Create Low-Poly 3D Fighters (Placeholder 3D meshes)
+const bodyGeometry = new THREE.BoxGeometry(0.8, 1.8, 0.5);
+
+const playerMat = new THREE.MeshLambertMaterial({ color: 0x00ffcc });
+const playerMesh = new THREE.Mesh(bodyGeometry, playerMat);
+playerMesh.position.set(-1.2, 0, 0);
+scene.add(playerMesh);
+
+const aiMat = new THREE.MeshLambertMaterial({ color: 0xff0055 });
+const aiMesh = new THREE.Mesh(bodyGeometry, aiMat);
+aiMesh.position.set(1.2, 0, 0);
+scene.add(aiMesh);
+
+// Game Logic State
+let playerHealth = 100;
+let aiHealth = 100;
 let gameOver = false;
+const input = { left: false, right: false };
 
-const player = {
-    x: 60, y: 155, width: 34, height: 85, 
-    primary: "#00ffcc", secondary: "#008866",
-    vx: 0, vy: 0, speed: 4.5, health: 100, isAttacking: false, attackType: null, attackCooldown: 0, facing: 1
-};
-
-const ai = {
-    x: 270, y: 155, width: 34, height: 85, 
-    primary: "#ff0055", secondary: "#880033",
-    vx: 0, vy: 0, speed: 2.8, health: 100, isAttacking: false, attackType: null, attackTimer: 0, facing: -1
-};
-
-const keys = {};
-
-function bindControl(id, keyName) {
+// Touch Bindings
+function bindControl(id, key) {
     const btn = document.getElementById(id);
-    btn.addEventListener("touchstart", e => { e.preventDefault(); keys[keyName] = true; }, {passive: false});
-    btn.addEventListener("touchend", e => { e.preventDefault(); keys[keyName] = false; }, {passive: false});
-    btn.addEventListener("mousedown", () => keys[keyName] = true);
-    btn.addEventListener("mouseup", () => keys[keyName] = false);
+    btn.addEventListener("touchstart", e => { e.preventDefault(); input[key] = true; }, {passive: false});
+    btn.addEventListener("touchend", e => { e.preventDefault(); input[key] = false; }, {passive: false});
+    btn.addEventListener("mousedown", () => input[key] = true);
+    btn.addEventListener("mouseup", () => input[key] = false);
 }
 
-bindControl("leftBtn", "a");
-bindControl("rightBtn", "d");
-bindControl("jumpBtn", "w");
-bindControl("punchBtn", "j");
-bindControl("kickBtn", "k");
+bindControl("leftBtn", "left");
+bindControl("rightBtn", "right");
 
-window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-
-function updateAI() {
+document.getElementById("punchBtn").addEventListener("click", () => {
     if (gameOver) return;
-
-    const distance = player.x - ai.x;
-    ai.facing = distance > 0 ? 1 : -1;
-
-    if (Math.abs(distance) > 50) {
-        ai.vx = Math.sign(distance) * ai.speed;
-    } else {
-        ai.vx = 0;
-        ai.attackTimer++;
-        if (ai.attackTimer > 35 && Math.random() < 0.5) {
-            triggerAttack(ai, player, Math.random() > 0.5 ? 'punch' : 'kick');
-            ai.attackTimer = 0;
+    // Attack logic check distance
+    if (Math.abs(playerMesh.position.x - aiMesh.position.x) < 2.0) {
+        aiHealth -= 15;
+        if (aiHealth < 0) aiHealth = 0;
+        document.getElementById("aiHealth").style.width = aiHealth + "%";
+        document.getElementById("aiText").innerText = aiHealth;
+        
+        // Visual hit punch kickback
+        aiMesh.position.x += 0.4;
+        
+        if (aiHealth === 0) {
+            gameOver = true;
+            document.getElementById("status").innerText = "3D VICTORY: YOU WIN";
         }
     }
-}
+});
 
-function triggerAttack(attacker, defender, type) {
-    attacker.isAttacking = true;
-    attacker.attackType = type;
-    setTimeout(() => {
-        attacker.isAttacking = false;
-        attacker.attackType = null;
-    }, 150);
+// Main Animation & Game Loop
+function animate() {
+    requestAnimationFrame(animate);
 
-    if (Math.abs(attacker.x - defender.x) < 60) {
-        defender.health -= (type === 'punch' ? 8 : 12);
-        if (defender.health < 0) defender.health = 0;
-    }
-}
-
-function update() {
-    if (gameOver) return;
-
-    player.vx = 0;
-    if (keys['a']) { player.vx = -player.speed; player.facing = -1; }
-    if (keys['d']) { player.vx = player.speed; player.facing = 1; }
-    if (keys['w'] && player.y === 155) player.vy = -10.5;
-
-    if (keys['j'] && player.attackCooldown === 0) {
-        triggerAttack(player, ai, 'punch');
-        player.attackCooldown = 18;
-    }
-    if (keys['k'] && player.attackCooldown === 0) {
-        triggerAttack(player, ai, 'kick');
-        player.attackCooldown = 24;
-    }
-    if (player.attackCooldown > 0) player.attackCooldown--;
-
-    player.vy += 0.55;
-    player.y += player.vy;
-    if (player.y > 155) { player.y = 155; player.vy = 0; }
-
-    ai.vy += 0.55;
-    ai.y += ai.vy;
-    if (ai.y > 155) { ai.y = 155; ai.vy = 0; }
-
-    player.x += player.vx;
-    updateAI();
-    ai.x += ai.vx;
-
-    player.x = Math.max(15, Math.min(canvas.width - 45, player.x));
-    ai.x = Math.max(15, Math.min(canvas.width - 45, ai.x));
-
-    document.getElementById("playerHealth").style.width = player.health + "%";
-    document.getElementById("pText").innerText = player.health;
-    document.getElementById("aiHealth").style.width = ai.health + "%";
-    document.getElementById("aiText").innerText = ai.health;
-
-    if (player.health <= 0 || ai.health <= 0) {
-        gameOver = true;
-        const statusEl = document.getElementById("status");
-        statusEl.innerText = player.health <= 0 ? "FATALITY: AI WINS" : "FLAWLESS VICTORY: YOU WIN";
-        statusEl.style.color = player.health <= 0 ? "#ff0055" : "#00ffcc";
-    }
-}
-
-// Draw Detailed Retro Human Fighter (MK Style Sprite Simulation)
-function drawFighter(f) {
-    ctx.save();
-    ctx.translate(f.x + f.width / 2, f.y);
-
-    // Body shading / shadow
-    ctx.fillStyle = "rgba(0,0,0,0.4)";
-    ctx.fillRect(-f.width/2, f.height, f.width, 6);
-
-    // Legs
-    ctx.fillStyle = f.secondary;
-    ctx.fillRect(-12, 50, 9, 35);
-    ctx.fillRect(3, 50, 9, 35);
-
-    // Torso / Vest / Gi
-    ctx.fillStyle = f.primary;
-    ctx.fillRect(-14, 20, 28, 32);
-    // Chest armor plate
-    ctx.fillStyle = f.secondary;
-    ctx.fillRect(-10, 23, 20, 16);
-
-    // Belt
-    ctx.fillStyle = "#111";
-    ctx.fillRect(-14, 48, 28, 5);
-
-    // Arms & Attacks
-    ctx.fillStyle = f.primary;
-    if (f.isAttacking) {
-        if (f.attackType === 'punch') {
-            // Punch lunge
-            ctx.fillRect(f.facing === 1 ? 6 : -30, 24, 28, 8);
-        } else {
-            // Kick extension
-            ctx.fillStyle = f.secondary;
-            ctx.fillRect(f.facing === 1 ? 10 : -25, 62, 22, 9);
-        }
-    } else {
-        // Normal arms resting
-        ctx.fillRect(-18, 24, 7, 24);
-        ctx.fillRect(11, 24, 7, 24);
-    }
-
-    // Head & Hood / Ninja Mask
-    ctx.fillStyle = f.secondary;
-    ctx.beginPath();
-    ctx.arc(0, 10, 11, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Mask / Face visor
-    ctx.fillStyle = "#111";
-    ctx.fillRect(-7, 8, 14, 7);
-    ctx.fillStyle = f.primary;
-    ctx.fillRect(-4, 10, 8, 3); // Glowing eye slit
-
-    ctx.restore();
-}
-
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Cyber Arena Background Grid Lines
-    ctx.strokeStyle = "#1a1a3a";
-    ctx.lineWidth = 1;
-    for (let i = 0; i < canvas.width; i += 30) {
-        ctx.beginPath();
-        ctx.moveTo(i, 240);
-        ctx.lineTo(i + (i - canvas.width/2)*0.5, 260);
-        ctx.stroke();
-    }
-
-    // Floor line
-    ctx.strokeStyle = "#00ffcc";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, 240);
-    ctx.lineTo(canvas.width, 240);
-    ctx.stroke();
-
-    drawFighter(player);
-    drawFighter(ai);
-}
-
-function gameLoop() {
-    update();
-    draw();
     if (!gameOver) {
-        requestAnimationFrame(gameLoop);
+        // Handle Movement in 3D Space
+        if (input.left && playerMesh.position.x > -2.5) playerMesh.position.x -= 0.05;
+        if (input.right && playerMesh.position.x < aiMesh.position.x - 0.8) playerMesh.position.x += 0.05;
+
+        // Simple AI tracking
+        if (aiMesh.position.x > playerMesh.position.x + 1.2) {
+            aiMesh.position.x -= 0.015;
+        }
     }
+
+    renderer.render(scene, camera);
 }
 
-gameLoop();
+animate();
 </script>
 
 </body>
